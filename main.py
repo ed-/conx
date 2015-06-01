@@ -78,6 +78,7 @@ class Conx(object):
                 del self._guesses[(self._crow, self._ccol)]
             else:
                 self._guesses[(self._crow, self._ccol)] = g
+            self.guess()
         else:
             self._goal.cells[self._crow][self._ccol] = toggle(
                 self._goal.cells[self._crow][self._ccol])

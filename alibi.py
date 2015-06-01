@@ -26,6 +26,8 @@ def colored_format(alibi):
         face = '99'
     '''
     face = '  '
+    if alive == 0.5:
+        face = '--'
     return GRAYize(face, alive)
 
 def corroborate(alibi, testimony, direction):
