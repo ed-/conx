@@ -142,7 +142,7 @@ if __name__ == '__main__':
     import random
     import vt100
 
-    random.seed("PETERSELLERS")
+    #random.seed("PETERSELLERS")
     ap = argparse.ArgumentParser()
     ap.add_argument('-r', '--rows', type=int, default=16)
     ap.add_argument('-c', '--cols', type=int, default=16)

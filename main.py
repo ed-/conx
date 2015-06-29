@@ -70,6 +70,25 @@ class Conx(object):
         if self._crow > (self.size - 1):
             self._crow = (self.size - 1)
 
+    def mark_alive(self):
+        self.mark_as(1)
+
+    def mark_dead(self):
+        self.mark_as(0)
+
+    def mark_clear(self):
+        if self._cbd == 0:
+            if self._guesses.get((self._crow, self._ccol)) is not None:
+                del self._guesses[(self._crow, self._ccol)]
+                self.guess()
+
+    def mark_as(self, value):
+        if self._cbd == 0:
+            self._guesses[(self._crow, self._ccol)] = value
+            self.guess()
+        else:
+            self._goal.cells[self._crow][self._ccol] = value
+
     def cycle(self):
         if self._cbd == 0:
             g = self._guesses.get((self._crow, self._ccol))
@@ -103,6 +122,30 @@ class Conx(object):
         self._goal.step()
         self._yawnoc = None
 
+    def loadboard(self):
+        vt100.cursor_home(self.size + 3, self.size + 3)
+        filename = raw_input("Load? ")
+        ALIVE, DEAD = '[]', '  '
+        data = []
+        with open(filename, 'r') as inf:
+            filedata = [line for line in inf.read().split('\n') if line]
+            data = []
+            for line in filedata:
+                linedata = []
+                while line:
+                    if line.startswith(ALIVE):
+                        linedata.append(True)
+                        line = line[len(ALIVE):]
+                    elif line.startswith(DEAD):
+                        linedata.append(False)
+                        line = line[len(DEAD):]
+                    else:
+                        line = line[1:]
+                data.append(linedata)
+        if len(data) != self.size:
+            return
+        self._goal.data = data
+
     def step(self):
         self._goal.step()
 
@@ -130,10 +173,12 @@ class Conx(object):
             C = None
             while C is None:
                 C = inkey.getch()
-            if C == 'f':
-                self.cycle()
-            elif C == ' ':
-                self.cycle()
+            if C == 'a':
+                self.mark_alive()
+            elif C == 'd':
+                self.mark_dead()
+            elif C == 's':
+                self.mark_clear()
             elif C == '<':
                 self.swapboards('<')
             elif C == '>':
@@ -146,15 +191,17 @@ class Conx(object):
                 self.move_left()
             elif C == 'l':
                 self.move_right()
+            elif C == 'O':
+                self.loadboard()
             elif C == 'Q':
                 break
             elif C == 'C':
                 self.clearboard()
             elif C == 'R':
                 self.randomize()
-            elif C == 'S':
+            elif C == 'n':
                 self.step()
-            elif C == 'G':
+            elif C == ' ':
                 self.guess()
 
     def draw(self):
