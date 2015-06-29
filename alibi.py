@@ -16,18 +16,16 @@ def long_format(alibi, prefix=''):
 
 def colored_format(alibi):
     alive = was_alive(alibi)
-    '''
-    face = '%2i' % len(alibi)
+    face = '%2i' % min(len(alibi), 99)
     if alive == 1.0:
-        face = '()'
+        face = '[]'
     if alive == 0.0:
-        face = '..'
+        face = '  '
     if len(alibi) > 99:
         face = '99'
-    '''
-    face = '  '
+    # face = '  '
     if alive == 0.5:
-        face = '--'
+        face = '<>'
     return GRAYize(face, alive)
 
 def corroborate(alibi, testimony, direction):

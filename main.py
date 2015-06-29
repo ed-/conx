@@ -80,7 +80,7 @@ class Conx(object):
         if self._cbd == 0:
             if self._guesses.get((self._crow, self._ccol)) is not None:
                 del self._guesses[(self._crow, self._ccol)]
-                self.guess()
+            self.guess()
 
     def mark_as(self, value):
         if self._cbd == 0:
@@ -116,6 +116,10 @@ class Conx(object):
         else:
             self._goal = conway.Conway(emptydata(self.size))
         self._yawnoc = None
+
+    def remove_guesses(self):
+        self._guesses = {}
+        self.draw()
 
     def randomize(self):
         self._goal = conway.Conway(randomdata(self.size, 0.5))
@@ -197,6 +201,8 @@ class Conx(object):
                 break
             elif C == 'C':
                 self.clearboard()
+            elif C == 'G':
+                self.remove_guesses()
             elif C == 'R':
                 self.randomize()
             elif C == 'n':
