@@ -87,45 +87,47 @@ def opposite(history, direction):
         'SW': NE, 'S': N, 'SE': NW}
     return transforms[direction](history & 511)
 
-def corroborate_history(history, report, direction):
-    # Does a history jive with the report from the given direction?
-    # A report is a history from a neighboring cell.
-    return (cardinal(history, direction) ==
-            opposite(report, direction))
 
-# Conway's Game of Life rules.
-_LIFE = {}
-rules = [(0, 3), (1, 2), (1, 3)]
-for i in range(512):
-    neighborcount = sum([nw(i), n(i), ne(i),
-                         w(i),        e(i),
-                         sw(i), s(i), se(i)])
+class Historian(object):
+    def __init__(self, rule):
+        self.rule = rule
+        self._mem = {}
 
-    _LIFE[i] = ib((c(i), neighborcount) in rules)
+    def Z(self, history):
+        if self._mem.get(history) is not None:
+            return self._mem[history]
+        center = c(history)
+        neighborcount = sum([nw(history), n(history), ne(history),
+                             w(history),              e(history),
+                             sw(history), s(history), se(history)])
+        z = (center, neighborcount) in self.rule
+        self._mem[history] = z
+        return z
 
-def LIFE(h):
-    if type(h) == list:
-        return _LIFE[cat(h) & 511]
-    return _LIFE[h & 511]
+    def corroborate(self, history, report, direction):
+        # Does a history jive with the report from the given direction?
+        # A report is a history from a neighboring cell.
+        return (cardinal(history, direction) ==
+                opposite(report, direction))
 
-def was_alive(history):
-    return c(history) == ALIVE
+    def check(self, history, **criteria):
+        # Does the given history pass all the criteria?
+        # Criteria are of the form NW=1, Z=0, nw=0
+        transforms = {
+            'NW': NW, 'N': N, 'NE': NE,
+            'W':  W,  'C': C, 'E':  W,
+            'SW': SW, 'S': S, 'SE': SE,
+            'nw': nw, 'n': n, 'ne': ne,
+            'w' : w,  'c': c, 'e' : e,
+            'sw': sw, 's': s, 'se': se,
+            'Z': self.Z,
+            }
+        
+        for query, value in criteria.items():
+            if query in transforms:
+                if transforms[query](history) != value:
+                    return False
+        return True
 
-def check(history, **criteria):
-    # Does the given history pass all the criteria?
-    # Criteria are of the form NW=1, Z=0, nw=0
-    transforms = {
-        'NW': NW, 'N': N, 'NE': NE,
-        'W':  W,  'C': C, 'E':  W,
-        'SW': SW, 'S': S, 'SE': SE,
-        'nw': nw, 'n': n, 'ne': ne,
-        'w' : w,  'c': c, 'e' : e,
-        'sw': sw, 's': s, 'se': se,
-        'LIFE': LIFE,
-        }
-    
-    for query, value in criteria.items():
-        if query in transforms:
-            if transforms[query](history) != value:
-                return False
-    return True
+    def was_alive(self, history):
+        return c(history) == ALIVE
