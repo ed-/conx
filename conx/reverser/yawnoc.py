@@ -110,7 +110,8 @@ class Yawnoc(object):
                              for dr in (-1, 0, 1)]
                 remaining.extend(neighbors)
                 self.alibis[row][column] = alibi_here
-                yield self.cloud
+                was_alive = self.detective.was_alive(alibi_here)
+                yield (row, column), was_alive, len(alibi_here)
 
     def guess(self):
         remaining = [(row, column)
@@ -132,8 +133,8 @@ class Yawnoc(object):
 
             self.alibis[row][column] = alibi_here
 
-            for b in self.corroborate([(row, column)]):
-                yield self.cloud
+            for ((r, c), chance, length) in self.corroborate([(row, column)]):
+                yield (r, c), chance, length
 
 
 if __name__ == '__main__':
