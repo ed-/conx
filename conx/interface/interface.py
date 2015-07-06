@@ -21,6 +21,7 @@ def getch():
 
 def emit(s):
     print(s, end='')
+    sys.stdout.flush()
 
 
 def erase_screen():
@@ -50,13 +51,14 @@ class Interface(object):
     def guess(self):
         if self.reverser is None:
             self.reverser = self.reverser_class(self.automata)
+            self._draw_reverser()
 
         for (row, column), state in self.guesses.items():
             self.reverser.narrow(row, column, c=state)
 
         try:
-            for c in self.reverser.corroborate():
-                self._draw_reverser(cloud=c)
+            for ((r, c), chance, length) in self.reverser.corroborate():
+                self._draw_one_guess((r, c), chance, length)
                 self.status_line = '\x1b[48;5;21mThinking...\x1b[0m'
                 self._draw_status_line()
         except ZeroDivisionError:
@@ -66,12 +68,11 @@ class Interface(object):
         else:
             self.status_line = ''
 
-    def _draw_reverser(self, cloud=None):
+    def _draw_reverser(self):
         if self.reverser is None:
             return
 
-        if cloud is None:
-            cloud = self.reverser.cloud
+        cloud = self.reverser.cloud
 
         NORMAL = '\x1b[0m'
 
@@ -95,6 +96,27 @@ class Interface(object):
                 move_cursor(ro + r, co)
                 emit(''.join(R) + NORMAL)
             move_cursor(self.automata.rows + 3, 2)
+
+
+    def _draw_one_guess(self, (row, column), chance, length):
+        NORMAL = '\x1b[0m'
+
+        ro, co = 2, 2
+        cell = ''
+        if not length:
+            cell = '\x1b[48;5;196m  '
+        elif chance == 1.0:
+            cell = '\x1b[48;5;231m[]'
+        elif chance == 0.5:
+            cell = '\x1b[48;5;22m<>'
+        elif chance == 0.0:
+            cell = '\x1b[48;5;16m  '
+        else:
+            ansi_grey = 232 + int(round(chance * 23.0))
+            cell = '\x1b[48;5;%im%2i' % (ansi_grey, min(length, 99))
+
+        move_cursor(ro + row, co + (column * 2))
+        emit(cell + NORMAL)
 
     def _draw_automata(self):
         NORMAL = chr(27) + '[0m'
