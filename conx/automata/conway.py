@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 
-import history
+DEAD = 0
+ALIVE = 1
 
 class Conway(object):
     cells = None
 
     def __init__(self, cells):
         self.cells = cells[:]
+        self.rule = [(0, 3), (1, 2), (1, 3)]
 
     def __str__(self):
         lookup = {
-            history.DEAD:  '  ',
-            history.ALIVE: '[]',
+            DEAD:  '  ',
+            ALIVE: '[]',
         }
         return '\n'.join([
             ''.join([
@@ -32,7 +34,7 @@ class Conway(object):
             return 0
         return len(self.cells[0])
 
-    def _cell_at(self, row, column):
+    def cell_at(self, row, column):
         # Negative indices are not meant to be relative.
         try:
             assert row >= 0
@@ -40,10 +42,15 @@ class Conway(object):
             return self.cells[row][column]
         except (AssertionError, IndexError):
             # Any cell outside the board is DEAD.
-            return history.DEAD
+            return DEAD
+
+    def _rule(self, neighborhood):
+        center = neighborhood[4]
+        neighbors = sum(neighborhood) - center
+        return ALIVE if (center, neighbors) in self.rule else DEAD
 
     def step(self):
-        self.cells = [[history.LIFE(self.neighborhood(row, column))
+        self.cells = [[self._rule(self.neighborhood(row, column))
                        for column in range(self.columns)]
                       for row in range(self.rows)]
 
@@ -53,12 +60,12 @@ class Conway(object):
                 for c in (-1, 0, 1)]
 
     def neighborhood(self, row, column):
-        return [self._cell_at(r, c)
+        return [self.cell_at(r, c)
                 for (r, c) in self.neighborhood_coords(row, column)]
 
     def diff(self, other):
         size = self.rows * self.columns
-        correct = sum([self._cell_at(row, column) == other._cell_at(row, column)
+        correct = sum([self.cell_at(row, column) == other.cell_at(row, column)
                        for row in range(self.rows) for column in range(self.columns)])
         return float(correct) / size
 
@@ -67,11 +74,11 @@ if __name__ == '__main__':
     import random
     coin = lambda p: p >= random.random()
 
-    def emptydata(X):
+    def randomdata(X):
         return [[coin(0.5) for c in range(X)]
                  for r in range(X)]
 
-    Z = Conway(emptydata(25))
+    Z = Conway(randomdata(25))
     x = ''
     while not x:
         Z.step()
