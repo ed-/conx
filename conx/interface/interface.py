@@ -87,7 +87,8 @@ class Interface(object):
             if chance == 0.0:
                 return '\x1b[48;5;16m  '
             ansi_grey = 232 + int(round(chance * 23.0))
-            return '\x1b[48;5;%im%2i' % (ansi_grey, min(length, 99))
+            face = '%02i' % length if length < 100 else '  '
+            return '\x1b[48;5;%im%s' % (ansi_grey, face)
 
         # Draw the reverser, if any, on the left.
         if self.reverser is not None:
@@ -113,7 +114,8 @@ class Interface(object):
             cell = '\x1b[48;5;16m  '
         else:
             ansi_grey = 232 + int(round(chance * 23.0))
-            cell = '\x1b[48;5;%im%2i' % (ansi_grey, min(length, 99))
+            face = '%02i' % length if length < 100 else '  '
+            cell = '\x1b[48;5;%im%s' % (ansi_grey, face)
 
         move_cursor(ro + row, co + (column * 2))
         emit(cell + NORMAL)

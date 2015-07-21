@@ -24,6 +24,22 @@ class Conway(object):
     def __repr__(self):
         return '<Conway %ix%i>' % (self.rows, self.columns)
 
+    @classmethod
+    def load(cls, filename):
+        text = ''
+        cells = []
+        with open(filename, 'r') as inf:
+            text = inf.read()
+        rows = text.split('\n')
+        rows = [row for row in rows if not row.startswith('#')]
+        rows = [[row[i:i+2] for i in range(0, len(row), 2)] for row in rows]
+        lookup = {
+            '  ': DEAD,
+            '[]': ALIVE,
+        }
+        cells = [[lookup[cell] for cell in row] for row in rows]
+        return cls(cells)
+
     @property
     def rows(self):
         return len(self.cells)
