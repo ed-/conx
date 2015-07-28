@@ -17,6 +17,10 @@ class Detective(object):
         # Eliminate from an alibi all histories that aren't backed up by
         # any of the reports in the testimony. A testimony is an alibi
         # from a neighboring cell.
+        if not alibi:
+            return alibi
+        if not testimony:
+            return alibi
         adjusted_ts = [history.opposite(h, direction) for h in testimony]
         return [h for h in alibi if history.cardinal(h, direction) in adjusted_ts]
 

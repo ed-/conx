@@ -47,8 +47,11 @@ class Interface(object):
         self.status_line = ''
         self.cursor_row = 0
         self.cursor_column = 0
+        self.show_guesses = True
 
     def guess(self):
+        if self.reverser is not None and self.reverser.impossible:
+            self.reverser = None
         if self.reverser is None:
             self.reverser = self.reverser_class(self.automata)
             self._draw_reverser()
@@ -62,7 +65,7 @@ class Interface(object):
                 self.status_line = '\x1b[48;5;21mThinking...\x1b[0m'
                 self._draw_status_line()
         except ZeroDivisionError:
-            self.reverser = None
+            #self.reverser = None
             self.status_line = '\x1b[48;5;196mImpossible!\x1b[0m'
             self._draw_status_line()
         else:
@@ -135,6 +138,8 @@ class Interface(object):
             emit(''.join(R) + NORMAL)
 
     def _draw_guesses(self):
+        if not self.show_guesses:
+            return
         tf = {
             0: '\x1b[48;5;53m  \x1b[0m',
             1: '\x1b[48;5;53m[]\x1b[0m',
@@ -163,13 +168,15 @@ class Interface(object):
         emit('\x1b[48;5;18m%s\x1b[0m' % face)
 
     def _draw_status_line(self):
+        move_cursor(self.automata.rows + 3, 2)
+        emit(' ' * self.automata.columns * 2)
         if not self.status_line:
             return
         move_cursor(self.automata.rows + 3, 2)
         emit(self.status_line)
-        
+
     def draw(self):
-        erase_screen()
+        #erase_screen()
         self._draw_reverser()
         self._draw_guesses()
         self._draw_automata()
@@ -199,7 +206,20 @@ class Interface(object):
         if (self.cursor_row, self.cursor_column) in self.guesses:
             del self.guesses[(self.cursor_row, self.cursor_column)]
 
+    def _clear_guesses(self):
+        self.guesses = {}
+
+    def _toggle_guesses(self):
+        self.show_guesses = not self.show_guesses
+
+    def _reguess(self):
+        self.reverser = None
+        self.guess()
+        
+
     def run(self):
+        erase_screen()
+        self.draw()
         while True:
             self.draw()
             C = None
@@ -231,3 +251,9 @@ class Interface(object):
             elif C == 'd':
                 self._cursor_dead()
                 self.guess()
+            elif C == 'C':
+                self._clear_guesses()
+            elif C == 'g':
+                self._toggle_guesses()
+            elif C == 'R':
+                self._reguess()
