@@ -15,6 +15,8 @@ class Yawnoc(object):
                         for cell in row]
                        for row in automata.cells]
 
+        self.impossible = False
+
         for row in range(self.rows):
             self.narrow(row, 0, nw=DEAD, w=DEAD, sw=DEAD)
             self.narrow(row, self.columns - 1, ne=DEAD, e=DEAD, se=DEAD)
@@ -93,6 +95,7 @@ class Yawnoc(object):
             if alibi_here is None:
                 continue
             if not alibi_here:
+                self.impossible = True
                 raise ZeroDivisionError()
             old_alibi_length = len(alibi_here)
             directions = ['NW', 'N', 'NE', 'W', None, 'E', 'SW', 'S', 'SE']
