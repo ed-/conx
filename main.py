@@ -10,7 +10,7 @@ from conx.reverser import yawnoc
 coin = lambda p: p >= random.random()
 
 def randomdata(X):
-    return [[coin(0.5) for c in range(X)]
+    return [[coin(0.333) for c in range(X)]
              for r in range(X)]
 
 if __name__ == '__main__':

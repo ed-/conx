@@ -50,6 +50,8 @@ class Interface(object):
         self.show_guesses = True
 
     def guess(self):
+        self.status_line = '\x1b[48;5;21mThinking...\x1b[0m'
+        self._draw_status_line()
         if self.reverser is not None and self.reverser.impossible:
             self.reverser = None
         if self.reverser is None:
@@ -65,7 +67,6 @@ class Interface(object):
                 self.status_line = '\x1b[48;5;21mThinking...\x1b[0m'
                 self._draw_status_line()
         except ZeroDivisionError:
-            #self.reverser = None
             self.status_line = '\x1b[48;5;196mImpossible!\x1b[0m'
             self._draw_status_line()
         else:
@@ -100,7 +101,6 @@ class Interface(object):
                 move_cursor(ro + r, co)
                 emit(''.join(R) + NORMAL)
             move_cursor(self.automata.rows + 3, 2)
-
 
     def _draw_one_guess(self, (row, column), chance, length):
         NORMAL = '\x1b[0m'
@@ -176,7 +176,6 @@ class Interface(object):
         emit(self.status_line)
 
     def draw(self):
-        #erase_screen()
         self._draw_reverser()
         self._draw_guesses()
         self._draw_automata()
