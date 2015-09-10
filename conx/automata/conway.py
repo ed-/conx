@@ -98,4 +98,5 @@ if __name__ == '__main__':
     x = ''
     while not x:
         Z.step()
+        print
         x = raw_input(Z)

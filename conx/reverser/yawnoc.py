@@ -116,6 +116,19 @@ class Yawnoc(object):
                 was_alive = self.detective.was_alive(alibi_here)
                 yield (row, column), was_alive, len(alibi_here)
 
+    def next_linchpin(self):
+        for r in range(self.rows):
+            for c in range(self.columns):
+                if 0.5 == self.alive_at(r, c):
+                    return r, c
+
+    def next_unguessed(self):
+        for r in range(self.rows):
+            for c in range(self.columns):
+                if self.alive_at(r, c) in [0.0, 1.0]:
+                    continue
+                return r, c
+
     def guess(self):
         remaining = [(row, column)
                      for row in range(self.rows)
