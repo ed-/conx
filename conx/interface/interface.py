@@ -214,11 +214,18 @@ class Interface(object):
     def _reguess(self):
         self.reverser = None
         self.guess()
-        
+
+    def _zap(self):
+        rc = self.reverser.next_linchpin()
+        if rc is None:
+            rc = self.reverser.next_unguessed()
+        if rc is None:
+            return
+        self.cursor_row, self.cursor_column, = rc
 
     def run(self):
         erase_screen()
-        self.draw()
+        self.guess()
         while True:
             self.draw()
             C = None
@@ -256,3 +263,5 @@ class Interface(object):
                 self._toggle_guesses()
             elif C == 'R':
                 self._reguess()
+            elif C == ';':
+                self._zap()
