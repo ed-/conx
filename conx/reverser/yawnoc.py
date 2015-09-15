@@ -25,6 +25,8 @@ class Yawnoc(object):
             self.narrow(0, column, nw=DEAD, n=DEAD, ne=DEAD)
             self.narrow(self.rows - 1, column, sw=DEAD, s=DEAD, se=DEAD)
 
+        self._original = None
+
     def __str__(self):
         rows = []
         for row in self.alibis:
@@ -115,6 +117,7 @@ class Yawnoc(object):
                 self.alibis[row][column] = alibi_here
                 was_alive = self.detective.was_alive(alibi_here)
                 yield (row, column), was_alive, len(alibi_here)
+        self.save()
 
     def next_linchpin(self):
         for r in range(self.rows):
@@ -128,6 +131,14 @@ class Yawnoc(object):
                 if self.alive_at(r, c) in [0.0, 1.0]:
                     continue
                 return r, c
+
+    def save(self):
+        if self._original is None:
+            self._original = [[c[:] for c in row] for row in self.alibis]
+
+    def reset(self):
+        self.alibis = [[c[:] for c in row] for row in self._original]
+        self.impossible = False
 
     def guess(self):
         remaining = [(row, column)

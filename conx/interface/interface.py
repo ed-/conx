@@ -42,7 +42,7 @@ class Interface(object):
         self.reverser_class = reverser_class
         self.rows = self.automata.rows
         self.columns = self.automata.columns
-        self.reverser = None
+        self.reverser = self.reverser_class(self.automata)
         self.guesses = {}
         self.status_line = ''
         self.cursor_row = 0
@@ -52,10 +52,8 @@ class Interface(object):
     def guess(self):
         self.status_line = '\x1b[48;5;21mThinking...\x1b[0m'
         self._draw_status_line()
-        if self.reverser is not None and self.reverser.impossible:
-            self.reverser = None
-        if self.reverser is None:
-            self.reverser = self.reverser_class(self.automata)
+        if self.reverser.impossible:
+            self.reverser.reset()
             self._draw_reverser()
 
         for (row, column), state in self.guesses.items():
@@ -212,7 +210,7 @@ class Interface(object):
         self.show_guesses = not self.show_guesses
 
     def _reguess(self):
-        self.reverser = None
+        self.reverser.reset()
         self.guess()
 
     def _zap(self):
@@ -225,6 +223,7 @@ class Interface(object):
 
     def run(self):
         erase_screen()
+        self.draw()
         self.guess()
         while True:
             self.draw()
