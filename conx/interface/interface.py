@@ -43,7 +43,6 @@ class Interface(object):
         self.rows = self.automata.rows
         self.columns = self.automata.columns
         self.reverser = self.reverser_class(self.automata)
-        self.guesses = {}
         self.status_line = ''
         self.cursor_row = 0
         self.cursor_column = 0
@@ -56,7 +55,7 @@ class Interface(object):
             self.reverser.reset()
             self._draw_reverser()
 
-        for (row, column), state in self.guesses.items():
+        for (row, column), state in self.reverser.guesses.items():
             self.reverser.narrow(row, column, c=state)
 
         try:
@@ -142,7 +141,7 @@ class Interface(object):
             0: '\x1b[48;5;53m  \x1b[0m',
             1: '\x1b[48;5;53m[]\x1b[0m',
         }
-        for (row, column), state in self.guesses.items():
+        for (row, column), state in self.reverser.guesses.items():
             R, C = row + 2, (column * 2) + 2
             move_cursor(R, C)
             emit(tf[state])
@@ -150,7 +149,7 @@ class Interface(object):
     def _draw_cursor(self):
         face = '  '
         g = 0
-        g = self.guesses.get((self.cursor_row, self.cursor_column))
+        g = self.reverser.guesses.get((self.cursor_row, self.cursor_column))
         if g is None:
             if self.reverser is not None:
                 alibi_here = self.reverser.alibi_at(self.cursor_row, self.cursor_column)
@@ -194,17 +193,17 @@ class Interface(object):
         self.cursor_column = min(self.automata.columns - 1, self.cursor_column + 1)
 
     def _cursor_dead(self):
-        self.guesses[(self.cursor_row, self.cursor_column)] = 0
+        self.reverser.guesses[(self.cursor_row, self.cursor_column)] = 0
 
     def _cursor_alive(self):
-        self.guesses[(self.cursor_row, self.cursor_column)] = 1
+        self.reverser.guesses[(self.cursor_row, self.cursor_column)] = 1
 
     def _cursor_clear(self):
-        if (self.cursor_row, self.cursor_column) in self.guesses:
-            del self.guesses[(self.cursor_row, self.cursor_column)]
+        if (self.cursor_row, self.cursor_column) in self.reverser.guesses:
+            del self.reverser.guesses[(self.cursor_row, self.cursor_column)]
 
     def _clear_guesses(self):
-        self.guesses = {}
+        self.reverser.guesses = {}
 
     def _toggle_guesses(self):
         self.show_guesses = not self.show_guesses

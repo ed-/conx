@@ -26,6 +26,7 @@ class Yawnoc(object):
             self.narrow(self.rows - 1, column, sw=DEAD, s=DEAD, se=DEAD)
 
         self._original = None
+        self.guesses = {}
 
     def __str__(self):
         rows = []
