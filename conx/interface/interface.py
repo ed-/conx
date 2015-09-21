@@ -46,7 +46,7 @@ class Interface(object):
         self.status_line = ''
         self.cursor_row = 0
         self.cursor_column = 0
-        self.show_guesses = True
+        self.show_guesses = False
 
     def guess(self):
         self.status_line = '\x1b[48;5;21mThinking...\x1b[0m'
@@ -193,17 +193,22 @@ class Interface(object):
         self.cursor_column = min(self.automata.columns - 1, self.cursor_column + 1)
 
     def _cursor_dead(self):
-        self.reverser.guesses[(self.cursor_row, self.cursor_column)] = 0
+        self.reverser.guess(self.cursor_row, self.cursor_column, 0)
 
     def _cursor_alive(self):
-        self.reverser.guesses[(self.cursor_row, self.cursor_column)] = 1
+        self.reverser.guess(self.cursor_row, self.cursor_column, 1)
 
     def _cursor_clear(self):
-        if (self.cursor_row, self.cursor_column) in self.reverser.guesses:
-            del self.reverser.guesses[(self.cursor_row, self.cursor_column)]
+        self.reverser.guess(self.cursor_row, self.cursor_column)
+
+    def _undo_guess(self):
+        rcv = self.reverser.undo_guess()
+        if rcv is not None:
+            rc, v = rcv
+            self.cursor_row, self.cursor_column = rc
 
     def _clear_guesses(self):
-        self.reverser.guesses = {}
+        self.reverser.clear_guesses()
 
     def _toggle_guesses(self):
         self.show_guesses = not self.show_guesses
@@ -213,9 +218,7 @@ class Interface(object):
         self.guess()
 
     def _zap(self):
-        rc = self.reverser.next_linchpin()
-        if rc is None:
-            rc = self.reverser.next_unguessed()
+        rc = self.reverser.next_guessable()
         if rc is None:
             return
         self.cursor_row, self.cursor_column, = rc
@@ -257,9 +260,13 @@ class Interface(object):
                 self.guess()
             elif C == 'C':
                 self._clear_guesses()
+                self.guess()
             elif C == 'g':
                 self._toggle_guesses()
             elif C == 'R':
+                self._reguess()
+            elif C == 'u':
+                self._undo_guess()
                 self._reguess()
             elif C == ';':
                 self._zap()

@@ -26,7 +26,8 @@ class Yawnoc(object):
             self.narrow(self.rows - 1, column, sw=DEAD, s=DEAD, se=DEAD)
 
         self._original = None
-        self.guesses = {}
+        #self.guesses = {}
+        self.guess_list = []
 
     def __str__(self):
         rows = []
@@ -54,6 +55,17 @@ class Yawnoc(object):
         return [[(self.detective.was_alive(a), len(a))
                  for a in row]
                 for row in self.alibis]
+
+    @property
+    def guesses(self):
+        G = {}
+        for ((r, c), v) in self.guess_list:
+            if v is None:
+                if (r, c) in G:
+                    del G[(r, c)]
+            else:
+                G[(r, c)] = v
+        return G
 
     def alibi_at(self, row, column):
         # Negative indices are not meant to be relative.
@@ -133,6 +145,12 @@ class Yawnoc(object):
                     continue
                 return r, c
 
+    def next_guessable(self):
+        LP = self.next_linchpin()
+        if LP is not None:
+            return LP
+        return self.next_unguessed()
+
     def save(self):
         if self._original is None:
             self._original = [[c[:] for c in row] for row in self.alibis]
@@ -141,28 +159,17 @@ class Yawnoc(object):
         self.alibis = [[c[:] for c in row] for row in self._original]
         self.impossible = False
 
-    def guess(self):
-        remaining = [(row, column)
-                     for row in range(self.rows)
-                     for column in range(self.columns)]
-        while remaining:
-            row, column = remaining.pop(0)
-            alibi_here = self.alibi_at(row, column)
-            if alibi_here is None:
-                continue
-            old_alibi_length = len(alibi_here)
-            was_alive = self.detective.was_alive(alibi_here)
-            if was_alive < 0:
-                continue
-            if was_alive > 0.75:
-                alibi_here = self.detective.narrow(alibi_here, c=ALIVE)
-            elif was_alive <= 0.5:
-                alibi_here = self.detective.narrow(alibi_here, c=DEAD)
+    def guess(self, row, column, value=None):
+        self.guess_list.append(((row, column), value))
 
-            self.alibis[row][column] = alibi_here
+    def undo_guess(self):
+        if not self.guess_list:
+            return
+        (r, c), v = self.guess_list.pop()
+        return (r, c), v
 
-            for ((r, c), chance, length) in self.corroborate([(row, column)]):
-                yield (r, c), chance, length
+    def clear_guesses(self):
+        self.guess_list = []
 
 
 if __name__ == '__main__':
