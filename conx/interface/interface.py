@@ -55,7 +55,7 @@ class Interface(object):
             self.reverser.reset()
             self._draw_reverser()
 
-        for (row, column), state in self.reverser.guesses.items():
+        for (row, column), state in self.reverser.guesses.as_dict().items():
             self.reverser.narrow(row, column, c=state)
 
         try:
@@ -141,7 +141,7 @@ class Interface(object):
             0: '\x1b[48;5;53m  \x1b[0m',
             1: '\x1b[48;5;53m[]\x1b[0m',
         }
-        for (row, column), state in self.reverser.guesses.items():
+        for (row, column), state in self.reverser.guesses.as_dict.items():
             R, C = row + 2, (column * 2) + 2
             move_cursor(R, C)
             emit(tf[state])

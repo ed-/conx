@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import alibi
+from guess import Guesses
 
 DEAD = 0
 ALIVE = 1
@@ -26,8 +27,7 @@ class Yawnoc(object):
             self.narrow(self.rows - 1, column, sw=DEAD, s=DEAD, se=DEAD)
 
         self._original = None
-        #self.guesses = {}
-        self.guess_list = []
+        self.guesses = Guesses()
 
     def __str__(self):
         rows = []
@@ -55,17 +55,6 @@ class Yawnoc(object):
         return [[(self.detective.was_alive(a), len(a))
                  for a in row]
                 for row in self.alibis]
-
-    @property
-    def guesses(self):
-        G = {}
-        for ((r, c), v) in self.guess_list:
-            if v is None:
-                if (r, c) in G:
-                    del G[(r, c)]
-            else:
-                G[(r, c)] = v
-        return G
 
     def alibi_at(self, row, column):
         # Negative indices are not meant to be relative.
@@ -160,16 +149,16 @@ class Yawnoc(object):
         self.impossible = False
 
     def guess(self, row, column, value=None):
-        self.guess_list.append(((row, column), value))
+        self.guesses.append((row, column), value)
 
     def undo_guess(self):
-        if not self.guess_list:
+        if not self.guesses:
             return
-        (r, c), v = self.guess_list.pop()
+        (r, c), v = self.guesses.pop()
         return (r, c), v
 
     def clear_guesses(self):
-        self.guess_list = []
+        self.guesses.reset()
 
 
 if __name__ == '__main__':
