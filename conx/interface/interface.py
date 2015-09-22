@@ -214,6 +214,10 @@ class Interface(object):
         self._draw_reverser()
         self._draw_guesses()
         self._draw_automata()
+
+        move_cursor((self.automata.rows / 2) + 2, self.automata.columns * 2 + 3)
+        emit(">>")
+
         self._draw_cursor()
         self._draw_status_line()
         move_cursor(self.automata.rows + 3, 2)
@@ -302,7 +306,7 @@ class Interface(object):
                 self._reguess()
             elif C == '!':
                 self.autoguess()
-                move_cursor(self.automata.rows + 3, 2)
+                self._draw_reverser()
                 break
             elif C == ';':
                 self._zap()

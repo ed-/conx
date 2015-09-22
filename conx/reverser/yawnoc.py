@@ -31,8 +31,17 @@ class Yawnoc(object):
     def __str__(self):
         rows = []
         for row in self.alibis:
-            r = ['%2i' % int(100 * self.detective.was_alive(c))
-                 for c in row]
+            r = []
+            for cell in r:
+                aa, _ = self.detective.was_alive(cell)
+                if aa == 1.0:
+                    r.append('[]')
+                elif aa == 0.0:
+                    r.append('  ')
+                else:
+                    r.append('%2i' % int(100 * c))
+            #r = ['%2i' % int(100 * self.detective.was_alive(c))
+            #     for c in row]
             rows.append(' '.join(r))
         return '\n'.join(rows)
 
@@ -54,6 +63,11 @@ class Yawnoc(object):
         return [[(self.detective.was_alive(a), len(a))
                  for a in row]
                 for row in self.alibis]
+
+    def bestguess(self):
+        return [[1 if c == 1.0 else 0
+                 for c, _ in row]
+                for row in self.cloud]
 
     def alibi_at(self, row, column):
         # Negative indices are not meant to be relative.

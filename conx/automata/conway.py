@@ -32,6 +32,7 @@ class Conway(object):
             text = inf.read()
         rows = text.split('\n')
         rows = [row for row in rows if not row.startswith('#')]
+        rows = [row for row in rows if row]
         rows = [[row[i:i+2] for i in range(0, len(row), 2)] for row in rows]
         lookup = {
             '  ': DEAD,

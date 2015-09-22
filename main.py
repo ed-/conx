@@ -27,3 +27,8 @@ if __name__ == '__main__':
 
     I = interface.Interface(C, yawnoc.Yawnoc)
     I.run()
+    with open("GOAL", "w") as outf:
+        outf.write("%s" % C)
+    with open("GUESS", "w") as outf:
+        G = conway.Conway(I.reverser.bestguess())
+        outf.write("%s" % G)
