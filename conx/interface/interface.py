@@ -48,8 +48,8 @@ class Interface(object):
         self.cursor_row = 0
         self.cursor_column = 0
         self.show_guesses = False
+        self.guesses = Guesses()
 
-    '''
     def guess(self):
         self.status_line = '\x1b[48;5;21mThinking...\x1b[0m'
         self._draw_status_line()
@@ -57,7 +57,7 @@ class Interface(object):
             self.reverser.reset()
             self._draw_reverser()
 
-        for (row, column), state in self.reverser.guesses.as_dict().items():
+        for (row, column), state in self.guesses.as_dict().items():
             self.reverser.narrow(row, column, c=state)
 
         try:
@@ -70,51 +70,43 @@ class Interface(object):
             self._draw_status_line()
         else:
             self.status_line = ''
-    '''
 
-    def _eval_and_draw(self, guesses):
-        self.status_line = '\x1b[48;5;21m   %i   \x1b[0m' % len(guesses)
-        self._draw_status_line()
+    def _eval_and_draw(self):
         try:
-            for ((r, c), chance, length) in self.reverser.evaluate_guesses(guesses):
+            for ((r, c), chance, length) in self.reverser.evaluate_guesses(self.guesses):
                 self._draw_one_guess((r, c), chance, length)
         except ZeroDivisionError:
             return False
         return True
 
     def autoguess(self):
-        self.status_line = '\x1b[48;5;21mThinking...\x1b[0m'
+        self.status_line = '\x1b[48;5;21mAutoguessing...\x1b[0m'
         self._draw_status_line()
-        guesses = Guesses()
         last_failure = None
         while True:
-            # Evaluate the current state of affairs.
-            ok = self._eval_and_draw(guesses)
+            ok = self._eval_and_draw()
             if ok:
-                #OK, find the next unguessed spot.
+                # Find the next unguessed spot.
                 last_failure = None
                 rc = self.reverser.next_guessable()
                 if rc is None:
-                    return  # We're done, nothing more to guess.
+                    return  # Nothing more to guess.
                 # Guess that the next spot in the list was DEAD.
-                guesses.append(rc, 0)
+                self.guesses.append(rc, 0)
 
             else:
                 # Failure. Remove the last guess from the list.
-                last_failure = guesses.pop()
-                if last_failure is None:
-                    # What?
-                    return
+                last_failure = self.guesses.pop()
                 rc, failed_guess = last_failure
                 if failed_guess == 0:
-                    # Well, that spot wasn't DEAD. Try alive.
-                    guesses.append(rc, 1)
+                    # That spot wasn't DEAD. Try ALIVE.
+                    self.guesses.append(rc, 1)
                 else:
-                    # It wasn't ALIVE? Unwind.
+                    # It wasn't ALIVE either. Unwind.
                     while failed_guess == 1:
-                        last_failure = guesses.pop()
+                        last_failure = self.guesses.pop()
                         rc, failed_guess = last_failure
-                    guesses.append(rc, 1)
+                    self.guesses.append(rc, 1)
 
     def _draw_reverser(self):
         if self.reverser is None:
@@ -138,7 +130,6 @@ class Interface(object):
             face = '%02i' % length if length < 100 else '  '
             return '\x1b[48;5;%im%s' % (ansi_grey, face)
 
-        # Draw the reverser, if any, on the left.
         if self.reverser is not None:
             for r, row in enumerate(cloud):
                 R = [__draw_alibi(*a) for a in row]
@@ -196,7 +187,7 @@ class Interface(object):
     def _draw_cursor(self):
         face = '  '
         g = 0
-        g = self.reverser.guesses.get((self.cursor_row, self.cursor_column))
+        g = self.guesses.get((self.cursor_row, self.cursor_column))
         if g is None:
             if self.reverser is not None:
                 alibi_here = self.reverser.alibi_at(self.cursor_row, self.cursor_column)
@@ -221,9 +212,9 @@ class Interface(object):
 
     def draw(self):
         self._draw_reverser()
-        #self._draw_guesses()
+        self._draw_guesses()
         self._draw_automata()
-        #self._draw_cursor()
+        self._draw_cursor()
         self._draw_status_line()
         move_cursor(self.automata.rows + 3, 2)
 
@@ -240,35 +231,26 @@ class Interface(object):
         self.cursor_column = min(self.automata.columns - 1, self.cursor_column + 1)
 
     def _cursor_dead(self):
-        self.reverser.guess(self.cursor_row, self.cursor_column, 0)
+        self.guesses.append((self.cursor_row, self.cursor_column), 0)
 
     def _cursor_alive(self):
-        #self.reverser.guess(self.cursor_row, self.cursor_column, 1)
-        pass
-
-    def _cursor_clear(self):
-        #self.reverser.guess(self.cursor_row, self.cursor_column)
-        pass
+        self.guesses.append((self.cursor_row, self.cursor_column), 1)
 
     def _undo_guess(self):
-        '''
-        rcv = self.reverser.undo_guess()
+        rcv = self.guesses.pop()
         if rcv is not None:
             rc, v = rcv
             self.cursor_row, self.cursor_column = rc
-        '''
-        pass
 
     def _clear_guesses(self):
-        #self.reverser.clear_guesses()
-        pass
+        self.guesses.reset()
 
     def _toggle_guesses(self):
         self.show_guesses = not self.show_guesses
 
     def _reguess(self):
         self.reverser.reset()
-        #self.guess()
+        self.guess()
 
     def _zap(self):
         rc = self.reverser.next_guessable()
@@ -279,12 +261,7 @@ class Interface(object):
     def run(self):
         erase_screen()
         self.draw()
-        #self.guess()
-        self.autoguess()
-        move_cursor(self.automata.rows + 3, 2)
-        self.draw()
-        if True:
-            return
+        self.guess()
         while True:
             self.draw()
             C = None
@@ -310,15 +287,12 @@ class Interface(object):
             elif C == 'a':
                 self._cursor_alive()
                 self.guess()
-            elif C == 's':
-                self._cursor_clear()
-                self.guess()
             elif C == 'd':
                 self._cursor_dead()
                 self.guess()
             elif C == 'C':
                 self._clear_guesses()
-                #self.guess()
+                self.guess()
             elif C == 'g':
                 self._toggle_guesses()
             elif C == 'R':
@@ -326,7 +300,9 @@ class Interface(object):
             elif C == 'u':
                 self._undo_guess()
                 self._reguess()
-            elif C == 'A':
+            elif C == '!':
                 self.autoguess()
+                move_cursor(self.automata.rows + 3, 2)
+                break
             elif C == ';':
                 self._zap()

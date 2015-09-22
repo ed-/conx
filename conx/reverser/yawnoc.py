@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import alibi
-#from conx.common import Guesses
+
 
 DEAD = 0
 ALIVE = 1
@@ -27,7 +27,6 @@ class Yawnoc(object):
             self.narrow(self.rows - 1, column, sw=DEAD, s=DEAD, se=DEAD)
 
         self._original = None
-        #self.guesses = Guesses()
 
     def __str__(self):
         rows = []
@@ -144,18 +143,6 @@ class Yawnoc(object):
         if self._original is not None:
             self.alibis = [[c[:] for c in row] for row in self._original]
         self.impossible = False
-
-    #def guess(self, row, column, value=None):
-    #    self.guesses.append((row, column), value)
-
-    #def undo_guess(self):
-    #    if not self.guesses:
-    #        return
-    #    (r, c), v = self.guesses.pop()
-    #    return (r, c), v
-
-    #def clear_guesses(self):
-    #    self.guesses.reset()
 
 
 if __name__ == '__main__':
