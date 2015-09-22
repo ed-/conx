@@ -73,6 +73,8 @@ class Interface(object):
     '''
 
     def _eval_and_draw(self, guesses):
+        self.status_line = '\x1b[48;5;21m   %i   \x1b[0m' % len(guesses)
+        self._draw_status_line()
         try:
             for ((r, c), chance, length) in self.reverser.evaluate_guesses(guesses):
                 self._draw_one_guess((r, c), chance, length)
@@ -280,6 +282,7 @@ class Interface(object):
         #self.guess()
         self.autoguess()
         move_cursor(self.automata.rows + 3, 2)
+        self.draw()
         if True:
             return
         while True:

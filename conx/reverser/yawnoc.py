@@ -122,15 +122,12 @@ class Yawnoc(object):
         self.save()
 
     def next_guessable(self):
-        for r in range(self.rows):
-            for c in range(self.columns):
-                if 0.5 == self.alive_at(r, c):
-                    return r, c
-        for r in range(self.rows):
-            for c in range(self.columns):
-                if self.alive_at(r, c) in [0.0, 1.0]:
-                    continue
-                return r, c
+        for W in range(50):
+            waterline = W / 100.0
+            for r in range(self.rows):
+                for c in range(self.columns):
+                    if abs(0.5 - self.alive_at(r, c)) <= waterline:
+                        return r, c
 
     def evaluate_guesses(self, guesses):
         self.reset()
