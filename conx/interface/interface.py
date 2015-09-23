@@ -70,6 +70,7 @@ class Interface(object):
             self._draw_status_line()
         else:
             self.status_line = ''
+            self._draw_status_line()
 
     def _eval_and_draw(self):
         try:
@@ -90,6 +91,8 @@ class Interface(object):
                 last_failure = None
                 rc = self.reverser.next_guessable()
                 if rc is None:
+                    self.status_line = ''
+                    self._draw_status_line()
                     return  # Nothing more to guess.
                 # Guess that the next spot in the list was DEAD.
                 self.guesses.append(rc, 0)
@@ -97,6 +100,11 @@ class Interface(object):
             else:
                 # Failure. Remove the last guess from the list.
                 last_failure = self.guesses.pop()
+                if last_failure is None:
+                    # Uh oh.
+                    self.status_line = '\x1b[48;5;196mImpossible!\x1b[0m'
+                    self._draw_status_line()
+                    return
                 rc, failed_guess = last_failure
                 if failed_guess == 0:
                     # That spot wasn't DEAD. Try ALIVE.
@@ -107,6 +115,8 @@ class Interface(object):
                         last_failure = self.guesses.pop()
                         rc, failed_guess = last_failure
                     self.guesses.append(rc, 1)
+        self.status_line = ''
+        self._draw_status_line()
 
     def _draw_reverser(self):
         if self.reverser is None:
@@ -179,7 +189,7 @@ class Interface(object):
             0: '\x1b[48;5;53m  \x1b[0m',
             1: '\x1b[48;5;53m[]\x1b[0m',
         }
-        for (row, column), state in self.reverser.guesses.as_dict.items():
+        for (row, column), state in self.guesses.as_dict().items():
             R, C = row + 2, (column * 2) + 2
             move_cursor(R, C)
             emit(tf[state])
@@ -307,6 +317,5 @@ class Interface(object):
             elif C == '!':
                 self.autoguess()
                 self._draw_reverser()
-                break
             elif C == ';':
                 self._zap()
