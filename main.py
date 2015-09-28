@@ -17,6 +17,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--size', type=int, default=10)
     ap.add_argument('--load', type=str)
+    ap.add_argument('--auto', dest='auto', action='store_true')
     args = ap.parse_args()
     C = None
     if args.load:
@@ -26,9 +27,7 @@ if __name__ == '__main__':
         C.step()
 
     I = interface.Interface(C, yawnoc.Yawnoc)
-    I.run()
-    with open("GOAL", "w") as outf:
-        outf.write("%s" % C)
-    with open("GUESS", "w") as outf:
-        G = conway.Conway(I.reverser.bestguess())
-        outf.write("%s" % G)
+    if args.auto:
+        I.autorun()
+    else:
+        I.run()
