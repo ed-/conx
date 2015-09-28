@@ -2,6 +2,7 @@
 
 import alibi
 
+
 DEAD = 0
 ALIVE = 1
 
@@ -26,14 +27,21 @@ class Yawnoc(object):
             self.narrow(self.rows - 1, column, sw=DEAD, s=DEAD, se=DEAD)
 
         self._original = None
-        #self.guesses = {}
-        self.guess_list = []
 
     def __str__(self):
         rows = []
         for row in self.alibis:
-            r = ['%2i' % int(100 * self.detective.was_alive(c))
-                 for c in row]
+            r = []
+            for cell in r:
+                aa, _ = self.detective.was_alive(cell)
+                if aa == 1.0:
+                    r.append('[]')
+                elif aa == 0.0:
+                    r.append('  ')
+                else:
+                    r.append('%2i' % int(100 * c))
+            #r = ['%2i' % int(100 * self.detective.was_alive(c))
+            #     for c in row]
             rows.append(' '.join(r))
         return '\n'.join(rows)
 
@@ -56,16 +64,10 @@ class Yawnoc(object):
                  for a in row]
                 for row in self.alibis]
 
-    @property
-    def guesses(self):
-        G = {}
-        for ((r, c), v) in self.guess_list:
-            if v is None:
-                if (r, c) in G:
-                    del G[(r, c)]
-            else:
-                G[(r, c)] = v
-        return G
+    def bestguess(self):
+        return [[1 if c == 1.0 else 0
+                 for c, _ in row]
+                for row in self.cloud]
 
     def alibi_at(self, row, column):
         # Negative indices are not meant to be relative.
@@ -132,44 +134,29 @@ class Yawnoc(object):
                 yield (row, column), was_alive, len(alibi_here)
         self.save()
 
-    def next_linchpin(self):
-        for r in range(self.rows):
-            for c in range(self.columns):
-                if 0.5 == self.alive_at(r, c):
-                    return r, c
-
-    def next_unguessed(self):
-        for r in range(self.rows):
-            for c in range(self.columns):
-                if self.alive_at(r, c) in [0.0, 1.0]:
-                    continue
-                return r, c
-
     def next_guessable(self):
-        LP = self.next_linchpin()
-        if LP is not None:
-            return LP
-        return self.next_unguessed()
+        for W in range(50):
+            waterline = W / 100.0
+            for r in range(self.rows):
+                for c in range(self.columns):
+                    if abs(0.5 - self.alive_at(r, c)) <= waterline:
+                        return r, c
+
+    def evaluate_guesses(self, guesses):
+        self.reset()
+        for (row, column), state in guesses.as_dict().items():
+            self.narrow(row, column, c=state)
+        for X in self.corroborate():
+            yield X
 
     def save(self):
         if self._original is None:
             self._original = [[c[:] for c in row] for row in self.alibis]
 
     def reset(self):
-        self.alibis = [[c[:] for c in row] for row in self._original]
+        if self._original is not None:
+            self.alibis = [[c[:] for c in row] for row in self._original]
         self.impossible = False
-
-    def guess(self, row, column, value=None):
-        self.guess_list.append(((row, column), value))
-
-    def undo_guess(self):
-        if not self.guess_list:
-            return
-        (r, c), v = self.guess_list.pop()
-        return (r, c), v
-
-    def clear_guesses(self):
-        self.guess_list = []
 
 
 if __name__ == '__main__':
