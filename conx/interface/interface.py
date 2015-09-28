@@ -117,6 +117,7 @@ class Interface(object):
                     self.guesses.append(rc, 1)
         self.status_line = ''
         self._draw_status_line()
+        self._draw_reverser()
 
     def _draw_reverser(self):
         if self.reverser is None:
@@ -246,15 +247,18 @@ class Interface(object):
 
     def _cursor_dead(self):
         self.guesses.append((self.cursor_row, self.cursor_column), 0)
+        self.guess()
 
     def _cursor_alive(self):
         self.guesses.append((self.cursor_row, self.cursor_column), 1)
+        self.guess()
 
     def _undo_guess(self):
         rcv = self.guesses.pop()
         if rcv is not None:
             rc, v = rcv
             self.cursor_row, self.cursor_column = rc
+        self._reguess()
 
     def _clear_guesses(self):
         self.guesses.reset()
@@ -272,50 +276,67 @@ class Interface(object):
             return
         self.cursor_row, self.cursor_column, = rc
 
+    def save(self, problem='original.gol', solution='solution.gol'):
+        with open(problem, "w") as outf:
+            outf.write("%s\n" % self.automata)
+        with open(solution, "w") as outf:
+            S = self.automata.__class__(self.reverser.bestguess())
+            outf.write("%s\n" % S)
+
     def run(self):
         erase_screen()
         self.draw()
         self.guess()
         while True:
-            self.draw()
-            C = None
-            while C is None:
-                C = getch()
-            if C == 'n':
-                self.automata.step()
-            elif C == ' ':
-                self.guess()
-            elif C == 'q':
-                break
-            elif C == 'Q':
-                break
-            elif C == 'h':
-                self._cursor_left()
-            elif C == 'j':
-                self._cursor_down()
-            elif C == 'k':
-                self._cursor_up()
-            elif C == 'l':
-                self._cursor_right()
+            try:
+                self.draw()
+                C = None
+                while C is None:
+                    C = ord(getch())
+                if C in [3, 17]:
+                    # Ctrl-c or Ctrl-q to quit.
+                    break
+                if C == 27:
+                    # Arrow keys to move.
+                    if getch() != '[':
+                        continue
+                    arrow = getch()
+                    if arrow == 'A':
+                        self._cursor_up()
+                    elif arrow == 'D':
+                        self._cursor_left()
+                    elif arrow == 'B':
+                        self._cursor_down()
+                    elif arrow == 'C':
+                        self._cursor_right()
 
-            elif C == 'a':
-                self._cursor_alive()
-                self.guess()
-            elif C == 'd':
-                self._cursor_dead()
-                self.guess()
-            elif C == 'C':
-                self._clear_guesses()
-                self.guess()
-            elif C == 'g':
-                self._toggle_guesses()
-            elif C == 'R':
-                self._reguess()
-            elif C == 'u':
-                self._undo_guess()
-                self._reguess()
-            elif C == '!':
-                self.autoguess()
-                self._draw_reverser()
-            elif C == ';':
-                self._zap()
+                C = chr(C)
+                if C == 'a':
+                    self._cursor_alive()
+                elif C == 'd':
+                    self._cursor_dead()
+                elif C == 'u':
+                    self._undo_guess()
+
+                elif C == 'g':
+                    self._toggle_guesses()
+
+                elif C == '!':
+                    self.autoguess()
+                elif C == ';':
+                    self._zap()
+
+                elif C == 'S':
+                    self.save()
+            except KeyboardInterrupt:
+                erase_screen()
+                move_cursor(1, 1)
+                break
+
+    def autorun(self):
+        erase_screen()
+        self.guess()
+        self.autoguess()
+        erase_screen()
+        self.draw()
+        self.save()
