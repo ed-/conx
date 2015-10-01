@@ -334,9 +334,17 @@ class Interface(object):
                 break
 
     def autorun(self):
-        erase_screen()
-        self.guess()
-        self.autoguess()
-        erase_screen()
-        self.draw()
-        self.save()
+        try:
+            erase_screen()
+            self.guess()
+            self.autoguess()
+            erase_screen()
+            self._draw_reverser()
+            self._draw_automata()
+            move_cursor((self.automata.rows / 2) + 2, self.automata.columns * 2 + 3)
+            emit(">>")
+            move_cursor(self.automata.rows + 3, 2)
+            self.save()
+        except KeyboardInterrupt:
+            erase_screen()
+            move_cursor(1, 1)
