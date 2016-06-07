@@ -48,6 +48,8 @@ class Interface(object):
         self.cursor_row = 0
         self.cursor_column = 0
         self.show_guesses = False
+        self.show_numbers = False
+        self.show_50s = False
         self.guesses = Guesses()
 
     def guess(self):
@@ -128,46 +130,34 @@ class Interface(object):
         NORMAL = '\x1b[0m'
 
         ro, co = 2, 2
-        def __draw_alibi(chance, length):
-            if not length:
-                return '\x1b[48;5;196m  '
-            if chance == 1.0:
-                return '\x1b[48;5;231m[]'
-            if chance == 0.5:
-                return '\x1b[48;5;22m<>'
-            if chance == 0.0:
-                return '\x1b[48;5;16m  '
-            ansi_grey = 232 + int(round(chance * 23.0))
-            face = '%02i' % length if length < 100 else '  '
-            return '\x1b[48;5;%im%s' % (ansi_grey, face)
-
         if self.reverser is not None:
             for r, row in enumerate(cloud):
-                R = [__draw_alibi(*a) for a in row]
+                R = [self._one_cell(ch, le) for (ch, le) in row]
                 move_cursor(ro + r, co)
                 emit(''.join(R) + NORMAL)
             move_cursor(self.automata.rows + 3, 2)
 
+    def _one_cell(self, chance, length):
+        if not length:
+            return '\x1b[48;5;196m  '
+        if chance == 1.0:
+            return '\x1b[48;5;231m[]'
+        if chance == 0.0:
+            return '\x1b[48;5;16m  '
+        if self.show_50s and chance == 0.5:
+            return '\x1b[48;5;22m<>'
+
+        ansi_grey = 232 + int(round(chance * 23.0))
+        face = '  '
+        if self.show_numbers and length < 100:
+            face = '%02i' % length
+        return '\x1b[48;5;%im%s' % (ansi_grey, face)
+
     def _draw_one_guess(self, (row, column), chance, length):
         NORMAL = '\x1b[0m'
-
         ro, co = 2, 2
-        cell = ''
-        if not length:
-            cell = '\x1b[48;5;196m  '
-        elif chance == 1.0:
-            cell = '\x1b[48;5;231m[]'
-        elif chance == 0.5:
-            cell = '\x1b[48;5;22m<>'
-        elif chance == 0.0:
-            cell = '\x1b[48;5;16m  '
-        else:
-            ansi_grey = 232 + int(round(chance * 23.0))
-            face = '%02i' % length if length < 100 else '  '
-            cell = '\x1b[48;5;%im%s' % (ansi_grey, face)
-
         move_cursor(ro + row, co + (column * 2))
-        emit(cell + NORMAL)
+        emit(self._one_cell(chance, length) + NORMAL)
 
     def _draw_automata(self):
         NORMAL = chr(27) + '[0m'
@@ -266,6 +256,12 @@ class Interface(object):
     def _toggle_guesses(self):
         self.show_guesses = not self.show_guesses
 
+    def _toggle_numbers(self):
+        self.show_numbers = not self.show_numbers
+
+    def _toggle_50s(self):
+        self.show_50s = not self.show_50s
+
     def _reguess(self):
         self.reverser.reset()
         self.guess()
@@ -320,6 +316,10 @@ class Interface(object):
 
                 elif C == 'g':
                     self._toggle_guesses()
+                elif C == 'n':
+                    self._toggle_numbers()
+                elif C == 'h':
+                    self._toggle_50s()
 
                 elif C == '!':
                     self.autoguess()
