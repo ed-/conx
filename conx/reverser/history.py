@@ -12,15 +12,15 @@ cat = lambda b: sum([ib(v) << (len(b) - i - 1)
                      for i, v in enumerate(b)])
 
 # Get a single cell from a history.
-nw = lambda i: ib(i & 256)
-n  = lambda i: ib(i & 128)
-ne = lambda i: ib(i &  64)
-w  = lambda i: ib(i &  32)
-c  = lambda i: ib(i &  16)
-e  = lambda i: ib(i &   8)
-sw = lambda i: ib(i &   4)
-s  = lambda i: ib(i &   2)
-se = lambda i: ib(i &   1)
+nw = lambda i: ib(i & 0400)
+n  = lambda i: ib(i & 0200)
+ne = lambda i: ib(i & 0100)
+w  = lambda i: ib(i &  040)
+c  = lambda i: ib(i &  020)
+e  = lambda i: ib(i &  010)
+sw = lambda i: ib(i &   04)
+s  = lambda i: ib(i &   02)
+se = lambda i: ib(i &   01)
 
 # Shift a history one row in one direction and/or one column in any direction.
 # Store these as they'll be reused a lot.
@@ -28,7 +28,7 @@ _NW, _N, _NE = {}, {}, {}
 _W,  _C, _E  = {}, {}, {}
 _SW, _S, _SE = {}, {}, {}
 
-for i in range(512):
+for i in range(01000):
     _NW[i] = cat([DEAD, DEAD,  DEAD,
                   DEAD, nw(i), n(i),
                   DEAD, w(i),  c(i)])
@@ -61,31 +61,31 @@ for i in range(512):
                   DEAD, c(i), e(i),
                   DEAD, s(i), se(i)])
 
-NW = lambda h: _NW[h & 511]
-N  = lambda h: _N[h & 511]
-NE = lambda h: _NE[h & 511]
+NW = lambda h: _NW[h & 0777]
+N  = lambda h:  _N[h & 0777]
+NE = lambda h: _NE[h & 0777]
 
-W  = lambda h: _W[h & 511]
-C  = lambda h: h & 511
-E  = lambda h: _E[h & 511]
+W  = lambda h:  _W[h & 0777]
+C  = lambda h:     h & 0777
+E  = lambda h:  _E[h & 0777]
 
-SW = lambda h: _SW[h & 511]
-S  = lambda h: _S[h & 511]
-SE = lambda h: _SE[h & 511]
+SW = lambda h: _SW[h & 0777]
+S  = lambda h:  _S[h & 0777]
+SE = lambda h: _SE[h & 0777]
 
 def cardinal(history, direction):
     transforms = {
         'NW': NW, 'N': N, 'NE': NE,
         'W':  W,  'C': C, 'E':  E,
         'SW': SW, 'S': S, 'SE': SE}
-    return transforms[direction](history & 511)
+    return transforms[direction](history)
 
 def opposite(history, direction):
     transforms = {
         'NW': SE, 'N': S, 'NE': SW,
         'W':  E,  'C': C, 'E':  W,
         'SW': NE, 'S': N, 'SE': NW}
-    return transforms[direction](history & 511)
+    return transforms[direction](history)
 
 
 class Historian(object):

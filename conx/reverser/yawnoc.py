@@ -37,7 +37,7 @@ class Yawnoc(object):
                 if aa == 1.0:
                     r.append('[]')
                 elif aa == 0.0:
-                    r.append('  ')
+                    r.append(' .')
                 else:
                     r.append('%2i' % int(100 * c))
             #r = ['%2i' % int(100 * self.detective.was_alive(c))
